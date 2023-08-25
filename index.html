@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    
+    .order-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+    .input-form {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .form-field {
+      margin-right: 10px;
+    }
+    #add-to-bill {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .orders-table {
+      border-collapse: collapse;
+      width: 80%;
+      margin-top: 20px;
+    }
+    .orders-table th, .orders-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    .orders-table th {
+      background-color: #f2f2f2;
+    }
+  </style>
+  <title>Food Order System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+</head>
+<body>
+  <div class="order-container">
+    <form class="input-form">
+      <div class="form-field" id="choose-price">
+        <label for="price">Choose Price:</label>
+        <input type="text" id="price" name="price">
+      </div>
+      <div class="form-field" id="choose-dish">
+        <label for="dish">Choose Dish:</label>
+        <input type="text" id="dish" name="dish">
+      </div>
+      <div class="form-field" id="choose-table">
+        <label for="table-number">Choose Table No:</label>
+        <select id="table-number" name="table-number">
+          <option value="1">Table 1</option>
+          <option value="2">Table 2</option>
+          <option value="3">Table 3</option>
+        </select>
+      </div>
+      <button id="add-to-bill">ADD TO BILL</button>
+    </form>
+    <table class="orders-table" id="orders">
+      <thead>
+        <tr>
+          <th>Table Number</th>
+          <th>Order</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      </tbody>
+    </table>
+  </div>
+  <script>
+    
+    const choosePriceInput = document.getElementById("price");
+    const chooseDishInput = document.getElementById("dish");
+    const chooseTableInput = document.getElementById("table-number");
+    const addToBillButton = document.getElementById("add-to-bill");
+    const ordersTableBody = document.querySelector("#orders tbody");
+
+    let orders = {};
+
+    function fetchOrders() {
+      axios.get("https://crudcrud.com/api/cd0b5f7c89874f4db640dfde14debeb2/oderdetails")
+        .then(response => {
+          orders = response.data;
+          updateOrdersDisplay();
+        })
+        .catch(error => {
+          console.error("Error fetching orders:", error);
+        });
+    }
+
+    function updateOrdersDisplay() {
+      ordersTableBody.innerHTML = "";
+      for (const order of Object.values(orders)) {
+        const orderRow = document.createElement("tr");
+        orderRow.innerHTML = `
+          <td>${order.tableNumber}</td>
+          <td>${order.orderDetails}</td>
+          <td><button class="delete-order" data-id="${order._id}">Delete</button></td>
+        `;
+        ordersTableBody.appendChild(orderRow);
+      }
+
+      const deleteButtons = document.querySelectorAll(".delete-order");
+      deleteButtons.forEach(button => {
+        button.addEventListener("click", deleteOrder);
+      });
+    }
+
+    function addToBill() {
+      const tableNumber = chooseTableInput.value;
+      const orderDetails = `${choosePriceInput.value} - ${chooseDishInput.value}`;
+
+      axios.post("https://crudcrud.com/api/cd0b5f7c89874f4db640dfde14debeb2/oderdetails", { tableNumber, orderDetails })
+        .then(response => {
+          fetchOrders();
+        })
+        .catch(error => {
+          console.error("Error adding order:", error);
+        });
+    }
+
+    function deleteOrder(event) {
+      const orderId = event.target.getAttribute("data-id");
+      const deleteUrl = `${"https://crudcrud.com/api/cd0b5f7c89874f4db640dfde14debeb2/oderdetails"}/${orderId}`;
+
+      axios.delete(deleteUrl)
+        .then(response => {
+          fetchOrders();
+        })
+        .catch(error => {
+          console.error("Error deleting order:", error);
+        });
+    }
+
+    addToBillButton.addEventListener("click", addToBill);
+
+    
+    fetchOrders();
+  </script>
+</body>
+</html>
